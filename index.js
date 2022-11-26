@@ -2,6 +2,7 @@ const express = require('express')
 const app = express()
 const cors = require('cors')
 const port = process.env.PORT || 5000
+const jwt = require('jsonwebtoken')
 
 require('dotenv').config()
 
@@ -16,12 +17,31 @@ app.use(express.json())
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.2kitjkk.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
-client.connect(err => {
-  const collection = client.db("test").collection("devices");
-  // perform actions on the collection object
-  console.log('db connect');
-  client.close();
-});
+
+const run = async ()=>{
+  try{
+
+    const usersCollection = client.db('phoneMela').collection('users')
+    
+    // POST
+    app.post('/users', async(req, res)=>{
+      const userInfo = req.body
+      const result = await usersCollection.insertOne(userInfo)
+      res.send(result)
+    })
+
+
+    // app.get('/jwt', async(req, res)=>{
+
+    // })
+  }finally{
+
+  }
+}
+
+run().catch(console.dir);
+
+
 
 
 app.get('/', (req, res) => {
@@ -29,5 +49,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`Phone Mela server running on port ${port}`)
 })
