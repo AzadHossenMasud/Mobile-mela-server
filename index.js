@@ -67,7 +67,7 @@ const run = async ()=>{
       res.send(user)
     })
 
-    app.get('/myphones', async(req, res)=>{
+    app.get('/myphones',verifyJWT, verifySeller, async(req, res)=>{
       const email = req.query.email
       console.log(email)
       const query = {
