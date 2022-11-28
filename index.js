@@ -25,11 +25,11 @@ const verifyJWT = (req, res, next) => {
   }
 
   const token = authHeader.split(' ')[1]
-  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decode)=>{
+  jwt.verify(token, process.env.ACCESS_TOKEN, (err, decoded)=>{
     if(err){
       return res.status(403).send({message : 'forbided access'})
     }
-    req.decode = decode
+    req.decoded = decoded
     next();
   })
 }
@@ -38,6 +38,23 @@ const run = async ()=>{
   try{
 
     const usersCollection = client.db('phoneMela').collection('users')
+    const phonesCollection = client.db('phoneMela').collection('phones')
+
+    // verify
+    const verifySeller = async (req, res, next)=>{
+      const decodedEmail = req.decoded.email
+      console.log(decodedEmail);
+      const query = {
+        email: decodedEmail
+      }
+
+      const user = await usersCollection.findOne(query)
+
+      if(user?.userType !== 'seller'){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      next()
+    }
     // GET
 
     app.get('/users',verifyJWT, async(req,res)=>{
@@ -48,6 +65,17 @@ const run = async ()=>{
       const user = await usersCollection.findOne(query)
       // console.log(user);
       res.send(user)
+    })
+
+    app.get('/myphones', async(req, res)=>{
+      const email = req.query.email
+      console.log(email)
+      const query = {
+        sellerEmail: email
+      }
+      
+      const phones = await phonesCollection.find(query).toArray() 
+      res.send(phones)
     })
     // POST
     app.post('/users', async(req, res)=>{
@@ -67,6 +95,12 @@ const run = async ()=>{
       
     })
 
+    app.post('/addphone', verifyJWT, verifySeller, async(req, res)=>{
+      const phone =req.body 
+      const result = await phonesCollection.insertOne(phone)
+      res.send(result)
+    })
+
   // JWT
     app.get('/jwt', async(req, res)=>{
       const email = req.query.email
@@ -76,7 +110,7 @@ const run = async ()=>{
 
       const user = await usersCollection.findOne(query)
       if(user){
-        const token = jwt.sign({email}, process.env.ACCESS_TOKEN , { expiresIn: '1h' } )
+        const token = jwt.sign({email}, process.env.ACCESS_TOKEN , { expiresIn: '24h' } )
         return res.send({accessToken: token})
 
       }
