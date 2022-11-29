@@ -43,7 +43,7 @@ const run = async ()=>{
     // verify
     const verifySeller = async (req, res, next)=>{
       const decodedEmail = req.decoded.email
-      console.log(decodedEmail);
+      // console.log(decodedEmail);
       const query = {
         email: decodedEmail
       }
@@ -55,6 +55,23 @@ const run = async ()=>{
       }
       next()
     }
+
+    const verifyAdmin = async (req, res, next)=>{
+      const decodedEmail = req.decoded.email
+      // console.log(decodedEmail);
+      const query = {
+        email: decodedEmail
+      }
+
+      const user = await usersCollection.findOne(query)
+
+      if(user?.userType !== 'admin'){
+        return res.status(403).send({message: 'forbidden access'})
+      }
+      next()
+    }
+
+
     // GET
 
     app.get('/catagories/:id', async(req, res)=>{
@@ -85,6 +102,15 @@ const run = async ()=>{
       
       const phones = await phonesCollection.find(query).toArray() 
       res.send(phones)
+    })
+
+    app.get('/allseller', verifyJWT, verifyAdmin, async(req, res)=>{
+      const query = {
+        userType: 'seller'
+      }
+
+      const sellers = await usersCollection.find(query).toArray()
+      res.send(sellers)
     })
     // POST
     app.post('/users', async(req, res)=>{
