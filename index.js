@@ -14,7 +14,7 @@ app.use(express.json())
 
 //  Mongo DB
 
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.2kitjkk.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -135,6 +135,27 @@ const run = async ()=>{
       const result = await phonesCollection.insertOne(phone)
       res.send(result)
     })
+
+    // PUT
+
+    app.put('/allseller/:id', verifyJWT, verifyAdmin, async(req, res)=>{
+        const id = req.params.id
+        const filter = {
+          _id : ObjectId(id)
+        }
+        const options = {
+          upsert: true
+        }
+
+        const updateSeller =  {
+          $set:{
+            isVerified : true
+          }
+        }
+
+        const result = await usersCollection.updateOne(filter, updateSeller, options )
+        res.send(result)
+    })  
 
   // JWT
     app.get('/jwt', async(req, res)=>{
