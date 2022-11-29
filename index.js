@@ -57,6 +57,15 @@ const run = async ()=>{
     }
     // GET
 
+    app.get('/catagories/:id', async(req, res)=>{
+      const id = req.params.id
+      const query = {
+        catagoryId : id
+      }
+      const phones = await phonesCollection.find(query).toArray()
+      res.send(phones)
+    })
+
     app.get('/users',verifyJWT, async(req,res)=>{
       const email = req.query.email
       const query ={
@@ -69,7 +78,7 @@ const run = async ()=>{
 
     app.get('/myphones',verifyJWT, verifySeller, async(req, res)=>{
       const email = req.query.email
-      console.log(email)
+      // console.log(email)
       const query = {
         sellerEmail: email
       }
