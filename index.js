@@ -112,6 +112,18 @@ const run = async ()=>{
       const sellers = await usersCollection.find(query).toArray()
       res.send(sellers)
     })
+
+    
+    app.get('/allbuyer', verifyJWT, verifyAdmin, async(req, res)=>{
+      const query = {
+        userType: 'buyer'
+      }
+
+      const buyers = await usersCollection.find(query).toArray()
+      res.send(buyers)
+    })
+
+
     // POST
     app.post('/users', async(req, res)=>{
       const userInfo = req.body
