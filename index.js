@@ -132,11 +132,34 @@ const run = async () => {
       const phoneId = advertiseItemId[0].phoneId;
       const query = {
         _id: ObjectId(phoneId),
+        status: "available",
       };
 
       const advertiseItem = await phonesCollection.findOne(query);
 
       res.send(advertiseItem);
+    });
+
+    app.get("/myorders", verifyJWT, async (req, res) => {
+      const email = req.query.email;
+      const query = {
+        buyerEmail: email,
+      };
+
+      const myOrders = await bookingCollection.find(query).toArray();
+      // console.log(email);
+      res.send(myOrders);
+    });
+
+    app.get("/mybuyers", verifyJWT, verifySeller, async (req, res) => {
+      const email = req.query.email;
+      const query = {
+        sellerEmail: email,
+      };
+
+      const myBuyers = await bookingCollection.find(query).toArray();
+      // console.log(email);
+      res.send(myBuyers);
     });
 
     // POST
@@ -238,6 +261,95 @@ const run = async () => {
       );
       res.send(result);
     });
+
+    app.put("/cancelorder", verifyJWT, async (req, res) => {
+      const orderId = req.query.orderId;
+      const phoneId = req.query.phoneId;
+      // console.log(phoneId, orderId);
+
+      const filter = {
+        _id: ObjectId(phoneId),
+      };
+      const options = {
+        upsert: true,
+      };
+
+      const updateDoc = {
+        $set: {
+          status: "available",
+        },
+      };
+
+      const updatePhone = await phonesCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+
+      const query = {
+        _id: ObjectId(orderId),
+      };
+
+      const result = await bookingCollection.deleteOne(query);
+      res.send(updatePhone);
+    });
+
+    app.put("/confirmorder", verifyJWT, async (req, res) => {
+      const orderId = req.query.orderId;
+      const phoneId = req.query.phoneId;
+      // console.log(phoneId, orderId);
+
+      const filter = {
+        _id: ObjectId(phoneId),
+      };
+      const options = {
+        upsert: true,
+      };
+
+      const updateDoc = {
+        $set: {
+          status: "sold",
+        },
+      };
+
+      const updatePhone = await phonesCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+
+      const query = {
+        _id: ObjectId(orderId),
+      };
+
+      const result = await bookingCollection.deleteOne(query);
+      res.send(updatePhone);
+    });
+
+    // DELETE
+
+    app.delete("/phone/:id", verifyJWT, verifySeller, async (req, res) => {
+      const id = req.params.id
+
+      const query = {
+        _id: ObjectId(id)
+      }
+
+      const result = await phonesCollection.deleteOne(query)
+      // console.log(id);
+      res.send(result)
+    });
+
+    app.delete('/buyer/:id', verifyJWT, verifyAdmin, async(req, res)=>{
+      const id = req.params.id
+      const query = {
+        _id: ObjectId(id)
+
+      }
+
+      const result = await usersCollection.deleteOne(query)
+      res.send(result)
+    })
 
     // JWT
     app.get("/jwt", async (req, res) => {
