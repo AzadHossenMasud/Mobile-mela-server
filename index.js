@@ -42,6 +42,7 @@ const run = async () => {
     const usersCollection = client.db("phoneMela").collection("users");
     const phonesCollection = client.db("phoneMela").collection("phones");
     const advertiseCollection = client.db("phoneMela").collection("advertise");
+    const bookingCollection = client.db("phoneMela").collection("booking");
 
     // verify
     const verifySeller = async (req, res, next) => {
@@ -80,6 +81,7 @@ const run = async () => {
       const id = req.params.id;
       const query = {
         catagoryId: id,
+        status: "available",
       };
       const phones = await phonesCollection.find(query).toArray();
       res.send(phones);
@@ -124,6 +126,19 @@ const run = async () => {
       res.send(buyers);
     });
 
+    app.get("/advertise", async (req, res) => {
+      const advertiseItemId = await advertiseCollection.find({}).toArray();
+
+      const phoneId = advertiseItemId[0].phoneId;
+      const query = {
+        _id: ObjectId(phoneId),
+      };
+
+      const advertiseItem = await phonesCollection.findOne(query);
+
+      res.send(advertiseItem);
+    });
+
     // POST
     app.post("/users", async (req, res) => {
       const userInfo = req.body;
@@ -144,6 +159,35 @@ const run = async () => {
     app.post("/addphone", verifyJWT, verifySeller, async (req, res) => {
       const phone = req.body;
       const result = await phonesCollection.insertOne(phone);
+      res.send(result);
+    });
+
+    app.post("/bookingphone", verifyJWT, async (req, res) => {
+      const bookPhone = req.body;
+      const phoneId = bookPhone.phoneId;
+
+      const filter = {
+        _id: ObjectId(phoneId),
+      };
+      const options = {
+        upsert: true,
+      };
+
+      const updateDoc = {
+        $set: {
+          status: "booked",
+        },
+      };
+
+      const updatePhone = await phonesCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+
+      const result = await bookingCollection.insertOne(bookPhone);
+
+      // console.log(updatePhone)
       res.send(result);
     });
 
